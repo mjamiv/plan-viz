@@ -1,0 +1,14 @@
+fastapi>=0.109.0
+uvicorn[standard]
+python-multipart
+sqlalchemy>=2.0
+pydantic>=2.0
+pymupdf>=1.23.0
+pdf2image
+pillow
+pytesseract
+httpx
+torch
+transformers>=4.38.0
+# Optional detection stack
+# ultralytics
