@@ -46,6 +46,14 @@ def process_document(document_id: int, db: Session = Depends(get_db)):
         run.status = "failed"
     finally:
         run.finished_at = dt.datetime.utcnow()
+        stem = f"run_{run.id}_{run.stage.replace(':', '_')}"
+        artifact_path = pdf_service.write_json(output, dirs["results"], stem)
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+        relative_path = os.path.relpath(artifact_path, base_dir)
+        output["artifact"] = {
+            "path": artifact_path,
+            "url": f"/files/{relative_path.replace(os.sep, '/')}",
+        }
         run.output_json = json.dumps(output)
         db.commit()
 

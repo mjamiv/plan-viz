@@ -109,6 +109,30 @@ button.primary:not(:disabled):hover {
   box-shadow: 0 8px 20px rgba(31, 28, 23, 0.2);
 }
 
+.exports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 24px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: #1f1c17;
+  color: #f5f0e8;
+  font-weight: 600;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(31, 28, 23, 0.2);
+}
+
 .status {
   margin-top: 12px;
   font-weight: 500;
@@ -171,6 +195,14 @@ button.primary:not(:disabled):hover {
   color: rgba(31, 28, 23, 0.7);
 }
 
+.run-artifact {
+  display: inline-flex;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #1f1c17;
+  text-decoration: underline;
+}
+
 .pages {
   display: grid;
   gap: 24px;
@@ -200,6 +232,11 @@ button.primary:not(:disabled):hover {
   position: absolute;
   border: 1px solid rgba(255, 140, 0, 0.8);
   background: rgba(255, 140, 0, 0.08);
+}
+
+.overlay-box.ocr {
+  border-color: rgba(46, 125, 50, 0.7);
+  background: rgba(46, 125, 50, 0.08);
 }
 
 .overlay-box.layout {

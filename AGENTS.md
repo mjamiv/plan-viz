@@ -69,3 +69,10 @@
 - Target storage (SQLite vs Postgres) for results.
 - Initial model choice (Qwen2-VL 7B vs LLaVA).
 - GPU availability and deployment environment.
+
+**Current status**
+- Phase 1 foundation is in place: FastAPI + React app, upload/render, results persistence, and page preview.
+- OCR pipeline supports Tesseract, EasyOCR, PaddleOCR, and Surya with normalized word boxes, confidence, and run metrics; UI overlays OCR boxes.
+- VLM, layout, and detection routes are wired with basic outputs; VLM uses Ollama on first page only.
+- Run outputs are persisted as JSON artifacts with download links; CSV/JSON exports exist per document; optional retention via `RESULTS_RETENTION_DAYS`.
+- Frontend framework chosen: React. Storage currently SQLite.

@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import uuid
 from typing import Any, Dict, List
 
@@ -57,3 +58,21 @@ def write_json(output: Dict[str, Any], results_dir: str, stem: str) -> str:
     with open(file_path, "w", encoding="utf-8") as handle:
         handle.write(json.dumps(output, indent=2))
     return file_path
+
+
+def cleanup_results(results_dir: str, max_age_days: int) -> int:
+    if max_age_days <= 0 or not os.path.isdir(results_dir):
+        return 0
+    cutoff = time.time() - (max_age_days * 86400)
+    removed = 0
+    for name in os.listdir(results_dir):
+        path = os.path.join(results_dir, name)
+        if not os.path.isfile(path):
+            continue
+        try:
+            if os.path.getmtime(path) < cutoff:
+                os.remove(path)
+                removed += 1
+        except OSError:
+            continue
+    return removed

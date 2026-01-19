@@ -16,6 +16,10 @@ export default function Viewer({
   const summarizeRun = (run) => {
     const output = run.output;
     if (!output) return null;
+    if (output.metrics?.word_count) {
+      const pageCount = output.metrics.page_count ?? output.pages?.length ?? 0;
+      return `${pageCount} page(s), ${output.metrics.word_count} words`;
+    }
     if (output.pages && Array.isArray(output.pages)) {
       const pageCount = output.pages.length;
       if (output.pages[0]?.detections) {
@@ -24,6 +28,13 @@ export default function Viewer({
           0
         );
         return `${pageCount} page(s), ${total} detections`;
+      }
+      if (output.pages[0]?.words) {
+        const total = output.pages.reduce(
+          (sum, page) => sum + (page.words?.length || 0),
+          0
+        );
+        return `${pageCount} page(s), ${total} words`;
       }
       if (output.pages[0]?.tokens) {
         const total = output.pages.reduce(
@@ -60,6 +71,23 @@ export default function Viewer({
             className="overlay-box detection"
             style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
             title={`${det.label} (${(det.confidence * 100).toFixed(1)}%)`}
+          />
+        );
+      });
+    }
+    if (pageOutput.words && page.width && page.height) {
+      pageOutput.words.slice(0, 400).forEach((word, index) => {
+        const [x1, y1, x2, y2] = word.bbox;
+        const left = (x1 / page.width) * 100;
+        const top = (y1 / page.height) * 100;
+        const width = ((x2 - x1) / page.width) * 100;
+        const height = ((y2 - y1) / page.height) * 100;
+        overlays.push(
+          <div
+            key={`ocr-${index}`}
+            className="overlay-box ocr"
+            style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
+            title={word.text}
           />
         );
       });
@@ -101,6 +129,22 @@ export default function Viewer({
           <dd>{document.stored_path}</dd>
         </div>
       </dl>
+      {runs.length > 0 ? (
+        <div className="exports">
+          <a
+            className="button"
+            href={`${apiBase}/results/${document.id}/export.csv`}
+          >
+            Download CSV
+          </a>
+          <a
+            className="button"
+            href={`${apiBase}/results/${document.id}/export.json`}
+          >
+            Download JSON
+          </a>
+        </div>
+      ) : null}
       <h3>Runs</h3>
       {runs.length === 0 ? (
         <p className="empty">No runs yet.</p>
@@ -117,6 +161,14 @@ export default function Viewer({
               </button>
               {summarizeRun(run) ? (
                 <div className="run-summary">{summarizeRun(run)}</div>
+              ) : null}
+              {run.output?.artifact?.url ? (
+                <a
+                  className="run-artifact"
+                  href={`${apiBase}${run.output.artifact.url}`}
+                >
+                  Download artifact
+                </a>
               ) : null}
               {run.output?.error ? (
                 <div className="run-error">{run.output.error}</div>

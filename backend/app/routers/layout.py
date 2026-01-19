@@ -1,12 +1,13 @@
 import datetime as dt
 import json
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import Document, ProcessRun
 from ..schemas import LayoutRequest, ProcessRunOut
-from ..services import layout_service
+from ..services import layout_service, pdf_service
 
 
 router = APIRouter(prefix="/layout", tags=["layout"])
@@ -37,6 +38,16 @@ def run_layout(document_id: int, payload: LayoutRequest, db: Session = Depends(g
         run.status = "failed"
     finally:
         run.finished_at = dt.datetime.utcnow()
+        base_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+        dirs = pdf_service.ensure_dirs(os.path.abspath(base_dir))
+        stem = f"run_{run.id}_{run.stage.replace(':', '_')}"
+        artifact_path = pdf_service.write_json(output, dirs["results"], stem)
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+        relative_path = os.path.relpath(artifact_path, base_dir)
+        output["artifact"] = {
+            "path": artifact_path,
+            "url": f"/files/{relative_path.replace(os.sep, '/')}",
+        }
         run.output_json = json.dumps(output)
         db.commit()
 
