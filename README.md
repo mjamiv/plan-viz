@@ -41,4 +41,18 @@ npm run dev
 
 - The frontend is a static Vite app suitable for GitHub Pages.
 - The backend must be hosted separately (GPU optional).
-- Next step: add an environment-based API base URL for GitHub Pages builds.
+- The GitHub Actions workflow builds `frontend` and publishes to GitHub Pages.
+- Set repository secret `VITE_API_BASE` to your hosted API URL (e.g. `https://api.example.com`).
+- For local overrides, copy `frontend/.env.example` to `frontend/.env.local`.
+
+## Environment variables
+
+Frontend:
+- `VITE_API_BASE`: API base URL for the frontend to call.
+- `VITE_BASE`: Vite base path (use `/plan-viz/` for GitHub Pages).
+
+Backend:
+- `ALLOWED_ORIGINS`: Comma-separated list of allowed CORS origins.
+- `LAYOUTLMV3_MODEL`: LayoutLMv3 model name or path.
+- `GROUNDING_DINO_MODEL`: Grounding DINO model name or path.
+- `YOLO_MODEL_PATH`: YOLOv8 model path.

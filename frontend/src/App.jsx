@@ -2,7 +2,7 @@ import { useState } from "react";
 import Upload from "./components/Upload.jsx";
 import Viewer from "./components/Viewer.jsx";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 export default function App() {
   const [document, setDocument] = useState(null);

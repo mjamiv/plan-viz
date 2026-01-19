@@ -19,9 +19,10 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Construction Vision API")
     data_dir = os.path.join(os.path.dirname(__file__), "data")
     app.mount("/files", StaticFiles(directory=os.path.abspath(data_dir)), name="files")
+    allow_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173"],
+        allow_origins=[origin.strip() for origin in allow_origins if origin.strip()],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
