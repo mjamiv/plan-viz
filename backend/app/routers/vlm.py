@@ -35,6 +35,7 @@ def run_vlm(document_id: int, payload: VlmRequest, db: Session = Depends(get_db)
             document.stored_path,
             prompt_key=payload.prompt_key,
             model=payload.model,
+            max_pages=payload.max_pages,
         )
         run.status = "completed"
     except Exception as exc:

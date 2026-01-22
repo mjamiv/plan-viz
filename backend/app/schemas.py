@@ -47,6 +47,7 @@ class OcrRequest(BaseModel):
 class VlmRequest(BaseModel):
     prompt_key: str
     model: str = "qwen2-vl:7b"
+    max_pages: Optional[int] = None
 
 
 class LayoutRequest(BaseModel):

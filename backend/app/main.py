@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .db import Base, ENGINE
-from .routers import detect, layout, ocr, process, results, upload, vlm
+from .routers import detect, layout, metrics, ocr, process, results, upload, vlm
 from .services import pdf_service
 
 
@@ -45,6 +45,7 @@ def create_app() -> FastAPI:
     app.include_router(layout.router)
     app.include_router(detect.router)
     app.include_router(results.router)
+    app.include_router(metrics.router)
     return app
 
 

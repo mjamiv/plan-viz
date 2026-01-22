@@ -1,6 +1,9 @@
 import { useState } from "react";
 import Upload from "./components/Upload.jsx";
 import Viewer from "./components/Viewer.jsx";
+import Comparison from "./components/Comparison.jsx";
+import Dashboard from "./components/Dashboard.jsx";
+import AnnotationReview from "./components/AnnotationReview.jsx";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
@@ -11,6 +14,7 @@ export default function App() {
   const [ocrProvider, setOcrProvider] = useState("tesseract");
   const [promptKey, setPromptKey] = useState("room_dimensions");
   const [vlmModel, setVlmModel] = useState("qwen2-vl:7b");
+  const [vlmMaxPages, setVlmMaxPages] = useState("");
   const [layoutProvider, setLayoutProvider] = useState("layoutlmv3");
   const [detectProvider, setDetectProvider] = useState("yolov8");
   const [detectTargets, setDetectTargets] = useState(
@@ -18,6 +22,7 @@ export default function App() {
   );
   const [pages, setPages] = useState([]);
   const [activeRunId, setActiveRunId] = useState(null);
+  const [activeTab, setActiveTab] = useState("viewer");
 
   const handleUpload = async (file) => {
     setStatus("Uploading...");
@@ -79,10 +84,14 @@ export default function App() {
   const handleVlm = async () => {
     if (!document) return;
     setStatus("Running VLM...");
+    const payload = { prompt_key: promptKey, model: vlmModel };
+    if (vlmMaxPages && parseInt(vlmMaxPages) > 0) {
+      payload.max_pages = parseInt(vlmMaxPages);
+    }
     const response = await fetch(`${API_BASE}/vlm/${document.id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt_key: promptKey, model: vlmModel }),
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
       setStatus("VLM failed.");
@@ -193,6 +202,17 @@ export default function App() {
               onChange={(event) => setVlmModel(event.target.value)}
             />
           </label>
+          <label className="select">
+            <span>Max Pages</span>
+            <input
+              type="number"
+              min="1"
+              value={vlmMaxPages}
+              onChange={(event) => setVlmMaxPages(event.target.value)}
+              placeholder="All"
+              style={{ width: "70px" }}
+            />
+          </label>
           <button
             className="primary"
             onClick={handleVlm}
@@ -247,15 +267,66 @@ export default function App() {
         </div>
         <p className="status">{status}</p>
       </section>
+
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === "viewer" ? "active" : ""}`}
+          onClick={() => setActiveTab("viewer")}
+        >
+          Viewer
+        </button>
+        <button
+          className={`tab ${activeTab === "comparison" ? "active" : ""}`}
+          onClick={() => setActiveTab("comparison")}
+        >
+          Compare OCR
+        </button>
+        <button
+          className={`tab ${activeTab === "dashboard" ? "active" : ""}`}
+          onClick={() => setActiveTab("dashboard")}
+        >
+          Dashboard
+        </button>
+        <button
+          className={`tab ${activeTab === "review" ? "active" : ""}`}
+          onClick={() => setActiveTab("review")}
+        >
+          Review
+        </button>
+      </div>
+
       <section className="panel">
-        <Viewer
-          apiBase={API_BASE}
-          document={document}
-          runs={runs}
-          pages={pages}
-          activeRunId={activeRunId}
-          onSelectRun={setActiveRunId}
-        />
+        {activeTab === "viewer" && (
+          <Viewer
+            apiBase={API_BASE}
+            document={document}
+            runs={runs}
+            pages={pages}
+            activeRunId={activeRunId}
+            onSelectRun={setActiveRunId}
+          />
+        )}
+        {activeTab === "comparison" && (
+          <Comparison
+            apiBase={API_BASE}
+            document={document}
+            runs={runs}
+          />
+        )}
+        {activeTab === "dashboard" && (
+          <Dashboard
+            apiBase={API_BASE}
+            document={document}
+          />
+        )}
+        {activeTab === "review" && (
+          <AnnotationReview
+            apiBase={API_BASE}
+            document={document}
+            runs={runs}
+            pages={pages}
+          />
+        )}
       </section>
     </div>
   );

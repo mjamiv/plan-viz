@@ -169,7 +169,7 @@ Construction drawings present unique challenges for AI vision systems:
 - [x] Integrate Tesseract
 - [x] Integrate Surya
 - [x] Text extraction with bounding boxes
-- [ ] Side-by-side comparison view
+- [x] Side-by-side comparison view
 
 **Evaluation metrics:**
 - Character accuracy
@@ -183,7 +183,7 @@ Construction drawings present unique challenges for AI vision systems:
 - [x] Ollama setup with Qwen2-VL or LLaVA
 - [x] Prompt templates for construction drawings
 - [x] Structured output parsing (JSON mode)
-- [ ] Multi-page document handling
+- [x] Multi-page document handling
 
 **Test prompts to develop:**
 - "List all room names and their dimensions"
@@ -210,11 +210,11 @@ Construction drawings present unique challenges for AI vision systems:
 ### Phase 5: Comparison Dashboard (Week 5-6)
 
 **Deliverables:**
-- [ ] Unified results schema
-- [ ] Performance metrics dashboard
-- [ ] Accuracy comparison charts
+- [x] Unified results schema
+- [x] Performance metrics dashboard
+- [x] Accuracy comparison charts
 - [x] Export functionality (JSON, CSV)
-- [ ] Annotation review interface
+- [x] Annotation review interface
 
 ---
 
