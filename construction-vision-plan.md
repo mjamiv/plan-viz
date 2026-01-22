@@ -135,11 +135,11 @@ Construction drawings present unique challenges for AI vision systems:
 ### Phase 1: Foundation (Week 1-2)
 
 **Deliverables:**
-- [ ] Project scaffolding (FastAPI + React)
-- [ ] PDF upload and storage
-- [ ] Basic PDF rendering (page images)
-- [ ] Metadata extraction pipeline
-- [ ] Simple results database schema
+- [x] Project scaffolding (FastAPI + React)
+- [x] PDF upload and storage
+- [x] Basic PDF rendering (page images)
+- [x] Metadata extraction pipeline
+- [x] Simple results database schema
 
 **Key files:**
 ```
@@ -165,11 +165,11 @@ Construction drawings present unique challenges for AI vision systems:
 ### Phase 2: OCR Pipeline (Week 2-3)
 
 **Deliverables:**
-- [ ] Integrate PaddleOCR
-- [ ] Integrate Tesseract
-- [ ] Integrate Surya
-- [ ] Text extraction with bounding boxes
-- [ ] Side-by-side comparison view
+- [x] Integrate PaddleOCR
+- [x] Integrate Tesseract
+- [x] Integrate Surya
+- [x] Text extraction with bounding boxes
+- [x] Side-by-side comparison view
 
 **Evaluation metrics:**
 - Character accuracy
@@ -180,10 +180,10 @@ Construction drawings present unique challenges for AI vision systems:
 ### Phase 3: VLM Integration (Week 3-4)
 
 **Deliverables:**
-- [ ] Ollama setup with Qwen2-VL or LLaVA
-- [ ] Prompt templates for construction drawings
-- [ ] Structured output parsing (JSON mode)
-- [ ] Multi-page document handling
+- [x] Ollama setup with Qwen2-VL or LLaVA
+- [x] Prompt templates for construction drawings
+- [x] Structured output parsing (JSON mode)
+- [x] Multi-page document handling
 
 **Test prompts to develop:**
 - "List all room names and their dimensions"
@@ -195,10 +195,10 @@ Construction drawings present unique challenges for AI vision systems:
 ### Phase 4: Layout & Symbol Detection (Week 4-5)
 
 **Deliverables:**
-- [ ] LayoutLMv3 integration for structure
-- [ ] YOLOv8 setup for symbol detection
-- [ ] Grounding DINO for open-vocabulary queries
-- [ ] Visual annotation overlay
+- [x] LayoutLMv3 integration for structure
+- [x] YOLOv8 setup for symbol detection
+- [x] Grounding DINO for open-vocabulary queries
+- [x] Visual annotation overlay
 
 **Detection targets:**
 - Doors, windows, walls
@@ -210,11 +210,11 @@ Construction drawings present unique challenges for AI vision systems:
 ### Phase 5: Comparison Dashboard (Week 5-6)
 
 **Deliverables:**
-- [ ] Unified results schema
-- [ ] Performance metrics dashboard
-- [ ] Accuracy comparison charts
-- [ ] Export functionality (JSON, CSV)
-- [ ] Annotation review interface
+- [x] Unified results schema
+- [x] Performance metrics dashboard
+- [x] Accuracy comparison charts
+- [x] Export functionality (JSON, CSV)
+- [x] Annotation review interface
 
 ---
 
