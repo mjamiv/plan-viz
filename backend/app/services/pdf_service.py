@@ -7,6 +7,12 @@ from typing import Any, Dict, List
 import fitz
 from pdf2image import convert_from_path
 
+# Poppler path for Windows
+POPPLER_PATH = os.environ.get(
+    "POPPLER_PATH",
+    r"C:\Users\michael.martello\Downloads\poppler-install\poppler-25.07.0\Library\bin"
+)
+
 
 def ensure_dirs(base_dir: str) -> Dict[str, str]:
     uploads_dir = os.path.join(base_dir, "uploads")
@@ -35,7 +41,7 @@ def extract_metadata(pdf_path: str) -> Dict[str, Any]:
 
 
 def render_pages(pdf_path: str, pages_dir: str, dpi: int = 200) -> List[Dict[str, Any]]:
-    images = convert_from_path(pdf_path, dpi=dpi)
+    images = convert_from_path(pdf_path, dpi=dpi, poppler_path=POPPLER_PATH)
     output_pages: List[Dict[str, Any]] = []
     base_name = os.path.splitext(os.path.basename(pdf_path))[0]
     for idx, image in enumerate(images, start=1):

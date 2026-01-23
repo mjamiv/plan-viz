@@ -5,6 +5,12 @@ from typing import Any, Dict, List
 import torch
 from pdf2image import convert_from_path
 
+# Poppler path for Windows
+POPPLER_PATH = os.environ.get(
+    "POPPLER_PATH",
+    r"C:\Users\michael.martello\Downloads\poppler-install\poppler-25.07.0\Library\bin"
+)
+
 
 @lru_cache(maxsize=1)
 def _load_layoutlmv3():
@@ -62,7 +68,7 @@ def run_layout(pdf_path: str, provider: str) -> Dict[str, Any]:
         raise RuntimeError(f"Unknown layout provider '{provider}'.")
 
     processor, model, model_name = _load_layoutlmv3()
-    images = convert_from_path(pdf_path, dpi=200)
+    images = convert_from_path(pdf_path, dpi=200, poppler_path=POPPLER_PATH)
 
     pages = []
     for page_index, image in enumerate(images, start=1):

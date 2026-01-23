@@ -4,6 +4,7 @@ import Viewer from "./components/Viewer.jsx";
 import Comparison from "./components/Comparison.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import AnnotationReview from "./components/AnnotationReview.jsx";
+import About from "./components/About.jsx";
 import { Agentation } from "agentation";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
@@ -12,14 +13,16 @@ export default function App() {
   const [document, setDocument] = useState(null);
   const [runs, setRuns] = useState([]);
   const [status, setStatus] = useState("");
-  const [promptKey, setPromptKey] = useState("room_dimensions");
+  const [promptKey, setPromptKey] = useState("general_notes");
+  const [customPrompt, setCustomPrompt] = useState("");
   const [vlmProvider, setVlmProvider] = useState("openai");
   const [vlmModel, setVlmModel] = useState("gpt-4o");
   const [apiKey, setApiKey] = useState("");
-  const [vlmMaxPages, setVlmMaxPages] = useState("");
+  const [ocrProvider, setOcrProvider] = useState("tesseract");
   const [pages, setPages] = useState([]);
   const [activeRunId, setActiveRunId] = useState(null);
   const [activeTab, setActiveTab] = useState("viewer");
+  const [currentPage, setCurrentPage] = useState("main");
 
   const handleUpload = async (file) => {
     console.log("[Upload] Starting upload:", file.name, file.size, "bytes");
@@ -80,6 +83,34 @@ export default function App() {
     }
   };
 
+  const handleOcr = async () => {
+    if (!document) return;
+    console.log("[OCR] Starting for document:", document.id, "provider:", ocrProvider);
+    setStatus("Running OCR...");
+    try {
+      const response = await fetch(`${API_BASE}/ocr/${document.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: ocrProvider }),
+      });
+      console.log("[OCR] Response status:", response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[OCR] Failed:", response.status, errorText);
+        setStatus("OCR failed.");
+        return;
+      }
+      const run = await response.json();
+      console.log("[OCR] Success:", run);
+      setRuns((prev) => [run, ...prev]);
+      setActiveRunId(run.id);
+      setStatus(`OCR ${run.status}`);
+    } catch (err) {
+      console.error("[OCR] Error:", err);
+      setStatus(`OCR error: ${err.message}`);
+    }
+  };
+
   const handleVlm = async () => {
     if (!document) return;
     const payload = {
@@ -88,8 +119,8 @@ export default function App() {
       provider: vlmProvider,
       api_key: apiKey,
     };
-    if (vlmMaxPages && parseInt(vlmMaxPages) > 0) {
-      payload.max_pages = parseInt(vlmMaxPages);
+    if (promptKey === "custom" && customPrompt) {
+      payload.custom_prompt = customPrompt;
     }
     console.log("[VLM] Starting request:", { documentId: document.id, ...payload, api_key: apiKey ? "***" : "(empty)" });
     setStatus("Running VLM...");
@@ -123,161 +154,252 @@ export default function App() {
     }
   };
 
+  if (currentPage === "about") {
+    return (
+      <>
+        <div className="app">
+          <nav className="nav">
+            <button className="nav-link" onClick={() => setCurrentPage("main")}>
+              Back to App
+            </button>
+          </nav>
+          <About />
+        </div>
+        <Agentation />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="app">
-      <header>
-        <h1>viz plan - v0</h1>
-        <p>PDF ingestion with VLM analysis.</p>
-      </header>
-      <section className="panel">
-        <Upload onUpload={handleUpload} />
-        <button
-          className="primary"
-          onClick={handleProcess}
-          disabled={!document}
-        >
-          Render Pages
-        </button>
-        <div className="row">
-          <label className="select">
-            <span>VLM Provider</span>
-            <select
-              value={vlmProvider}
-              onChange={(event) => {
-                setVlmProvider(event.target.value);
-                setVlmModel(event.target.value === "openai" ? "gpt-4o" : "qwen2-vl:7b");
-              }}
-            >
-              <option value="openai">OpenAI</option>
-              <option value="ollama">Ollama</option>
-            </select>
-          </label>
-          {vlmProvider === "openai" && (
-            <label className="select">
-              <span>API Key</span>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                placeholder="sk-..."
-              />
-            </label>
-          )}
-          <label className="select">
-            <span>VLM Prompt</span>
-            <select
-              value={promptKey}
-              onChange={(event) => setPromptKey(event.target.value)}
-            >
-              <option value="room_dimensions">Room dimensions</option>
-              <option value="title_block">Title block</option>
-              <option value="electrical_layout">Electrical layout</option>
-              <option value="revision_history">Revision history</option>
-              <option value="drawing_scale">Drawing scale</option>
-            </select>
-          </label>
-          <label className="select">
-            <span>Model</span>
-            {vlmProvider === "openai" ? (
-              <select
-                value={vlmModel}
-                onChange={(event) => setVlmModel(event.target.value)}
+        <header>
+          <div className="header-row">
+            <div>
+              <h1>viz plan <span className="version-tag">v0</span></h1>
+              <p className="tagline">PDF ingestion with VLM analysis</p>
+            </div>
+            <nav className="nav">
+              <button className="nav-link about-btn" onClick={() => setCurrentPage("about")}>
+                <span className="dance-text">
+                  <span className="dance-char" style={{ animationDelay: "0ms" }}>A</span>
+                  <span className="dance-char" style={{ animationDelay: "50ms" }}>b</span>
+                  <span className="dance-char" style={{ animationDelay: "100ms" }}>o</span>
+                  <span className="dance-char" style={{ animationDelay: "150ms" }}>u</span>
+                  <span className="dance-char" style={{ animationDelay: "200ms" }}>t</span>
+                </span>
+              </button>
+            </nav>
+          </div>
+        </header>
+
+        <section className="panel control-panel">
+          <div className="control-section">
+            <h3 className="section-title">Document</h3>
+            <div className="control-group">
+              <Upload onUpload={handleUpload} />
+              <button
+                className="btn btn-primary"
+                onClick={handleProcess}
+                disabled={!document}
               >
-                <option value="gpt-4o">GPT-4o</option>
-                <option value="gpt-4o-mini">GPT-4o Mini</option>
-                <option value="gpt-4-turbo">GPT-4 Turbo</option>
-              </select>
-            ) : (
-              <input
-                value={vlmModel}
-                onChange={(event) => setVlmModel(event.target.value)}
-                placeholder="qwen2-vl:7b"
-              />
-            )}
-          </label>
-          <label className="select">
-            <span>Max Pages</span>
-            <input
-              type="number"
-              min="1"
-              value={vlmMaxPages}
-              onChange={(event) => setVlmMaxPages(event.target.value)}
-              placeholder="All"
-              style={{ width: "70px" }}
-            />
-          </label>
+                Render Pages
+              </button>
+            </div>
+          </div>
+
+          <div className="divider" />
+
+          <div className="control-section">
+            <h3 className="section-title">VLM Analysis</h3>
+            <div className="control-grid">
+              <div className="control-group">
+                <label className="label">Provider</label>
+                <select
+                  className="input"
+                  value={vlmProvider}
+                  onChange={(event) => {
+                    setVlmProvider(event.target.value);
+                    setVlmModel(event.target.value === "openai" ? "gpt-4o" : "qwen2-vl:7b");
+                  }}
+                >
+                  <option value="openai">OpenAI</option>
+                  <option value="ollama">Ollama</option>
+                </select>
+              </div>
+
+              {vlmProvider === "openai" && (
+                <div className="control-group">
+                  <label className="label">API Key</label>
+                  <input
+                    type="password"
+                    className="input"
+                    value={apiKey}
+                    onChange={(event) => setApiKey(event.target.value)}
+                    placeholder="sk-..."
+                  />
+                </div>
+              )}
+
+              <div className="control-group">
+                <label className="label">Model</label>
+                {vlmProvider === "openai" ? (
+                  <select
+                    className="input"
+                    value={vlmModel}
+                    onChange={(event) => setVlmModel(event.target.value)}
+                  >
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="gpt-4o-mini">GPT-4o Mini</option>
+                    <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                  </select>
+                ) : (
+                  <input
+                    className="input"
+                    value={vlmModel}
+                    onChange={(event) => setVlmModel(event.target.value)}
+                    placeholder="qwen2-vl:7b"
+                  />
+                )}
+              </div>
+
+              <div className="control-group">
+                <label className="label">Prompt</label>
+                <select
+                  className="input"
+                  value={promptKey}
+                  onChange={(event) => setPromptKey(event.target.value)}
+                >
+                  <option value="general_notes">Pull General Notes</option>
+                  <option value="drawing_contents">Identify Drawing Contents</option>
+                  <option value="design_codes">List Design Codes</option>
+                  <option value="component_dimensions">Component & Dimension Summary</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+
+              {promptKey === "custom" && (
+                <div className="control-group" style={{ gridColumn: "1 / -1" }}>
+                  <label className="label">Custom Prompt</label>
+                  <input
+                    className="input"
+                    value={customPrompt}
+                    onChange={(event) => setCustomPrompt(event.target.value)}
+                    placeholder="Enter your custom prompt..."
+                  />
+                </div>
+              )}
+
+            </div>
+
+            <div className="control-actions">
+              <button
+                className="btn btn-primary"
+                onClick={handleVlm}
+                disabled={!document}
+              >
+                Run VLM
+              </button>
+            </div>
+          </div>
+
+          <div className="divider" />
+
+          <div className="control-section">
+            <h3 className="section-title">OCR</h3>
+            <div className="control-group">
+              <div className="control-group" style={{ flexDirection: "column", alignItems: "stretch", gap: "6px" }}>
+                <label className="label">Provider</label>
+                <select
+                  className="input"
+                  value={ocrProvider}
+                  onChange={(event) => setOcrProvider(event.target.value)}
+                  style={{ width: "160px" }}
+                >
+                  <option value="tesseract">Tesseract</option>
+                  <option value="paddleocr">PaddleOCR</option>
+                  <option value="easyocr">EasyOCR</option>
+                  <option value="surya">Surya</option>
+                </select>
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={handleOcr}
+                disabled={!document}
+                style={{ marginTop: "auto" }}
+              >
+                Run OCR
+              </button>
+            </div>
+          </div>
+
+          {status && <p className="status-text" style={{ marginTop: "16px" }}>{status}</p>}
+        </section>
+
+        <div className="tabs">
           <button
-            className="primary"
-            onClick={handleVlm}
-            disabled={!document}
+            className={`tab ${activeTab === "viewer" ? "active" : ""}`}
+            onClick={() => setActiveTab("viewer")}
           >
-            Run VLM
+            Viewer
+          </button>
+          <button
+            className={`tab ${activeTab === "comparison" ? "active" : ""}`}
+            onClick={() => setActiveTab("comparison")}
+          >
+            Compare OCR
+          </button>
+          <button
+            className={`tab ${activeTab === "dashboard" ? "active" : ""}`}
+            onClick={() => setActiveTab("dashboard")}
+          >
+            Dashboard
+          </button>
+          <button
+            className={`tab ${activeTab === "review" ? "active" : ""}`}
+            onClick={() => setActiveTab("review")}
+          >
+            Review
           </button>
         </div>
-        <p className="status">{status}</p>
-      </section>
 
-      <div className="tabs">
-        <button
-          className={`tab ${activeTab === "viewer" ? "active" : ""}`}
-          onClick={() => setActiveTab("viewer")}
-        >
-          Viewer
-        </button>
-        <button
-          className={`tab ${activeTab === "comparison" ? "active" : ""}`}
-          onClick={() => setActiveTab("comparison")}
-        >
-          Compare OCR
-        </button>
-        <button
-          className={`tab ${activeTab === "dashboard" ? "active" : ""}`}
-          onClick={() => setActiveTab("dashboard")}
-        >
-          Dashboard
-        </button>
-        <button
-          className={`tab ${activeTab === "review" ? "active" : ""}`}
-          onClick={() => setActiveTab("review")}
-        >
-          Review
-        </button>
-      </div>
+        <section className="panel">
+          {activeTab === "viewer" && (
+            <Viewer
+              apiBase={API_BASE}
+              document={document}
+              runs={runs}
+              pages={pages}
+              activeRunId={activeRunId}
+              onSelectRun={setActiveRunId}
+            />
+          )}
+          {activeTab === "comparison" && (
+            <Comparison
+              apiBase={API_BASE}
+              document={document}
+              runs={runs}
+            />
+          )}
+          {activeTab === "dashboard" && (
+            <Dashboard
+              apiBase={API_BASE}
+              document={document}
+            />
+          )}
+          {activeTab === "review" && (
+            <AnnotationReview
+              apiBase={API_BASE}
+              document={document}
+              runs={runs}
+              pages={pages}
+            />
+          )}
+        </section>
 
-      <section className="panel">
-        {activeTab === "viewer" && (
-          <Viewer
-            apiBase={API_BASE}
-            document={document}
-            runs={runs}
-            pages={pages}
-            activeRunId={activeRunId}
-            onSelectRun={setActiveRunId}
-          />
-        )}
-        {activeTab === "comparison" && (
-          <Comparison
-            apiBase={API_BASE}
-            document={document}
-            runs={runs}
-          />
-        )}
-        {activeTab === "dashboard" && (
-          <Dashboard
-            apiBase={API_BASE}
-            document={document}
-          />
-        )}
-        {activeTab === "review" && (
-          <AnnotationReview
-            apiBase={API_BASE}
-            document={document}
-            runs={runs}
-            pages={pages}
-          />
-        )}
-      </section>
+        <footer className="footer">
+          northstar.lm | 2026
+        </footer>
       </div>
       <Agentation />
     </>

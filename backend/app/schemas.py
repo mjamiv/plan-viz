@@ -50,6 +50,7 @@ class VlmRequest(BaseModel):
     provider: str = "openai"  # "openai" or "ollama"
     api_key: Optional[str] = None  # Required for OpenAI
     max_pages: Optional[int] = None
+    custom_prompt: Optional[str] = None  # Required when prompt_key is "custom"
 
 
 class LayoutRequest(BaseModel):

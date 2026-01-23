@@ -38,6 +38,7 @@ def run_vlm(document_id: int, payload: VlmRequest, db: Session = Depends(get_db)
             provider=payload.provider,
             api_key=payload.api_key,
             max_pages=payload.max_pages,
+            custom_prompt=payload.custom_prompt,
         )
         run.status = "completed"
     except Exception as exc:

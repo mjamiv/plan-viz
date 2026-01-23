@@ -7,16 +7,23 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 from pdf2image import convert_from_path
+import os
 
 logger = logging.getLogger(__name__)
 
+# Poppler path for Windows
+POPPLER_PATH = os.environ.get(
+    "POPPLER_PATH",
+    r"C:\Users\michael.martello\Downloads\poppler-install\poppler-25.07.0\Library\bin"
+)
+
 
 PROMPTS = {
-    "room_dimensions": "List all room names and their dimensions.",
-    "title_block": "Identify the title block information.",
-    "electrical_layout": "Describe the electrical layout.",
-    "revision_history": "Extract the revision history.",
-    "drawing_scale": "What scale is this drawing?",
+    "general_notes": "Extract all general notes from this construction drawing. Include any specifications, requirements, abbreviations, and important callouts. Return as a structured list.",
+    "drawing_contents": "Identify and describe the contents of this drawing. What type of drawing is it (floor plan, elevation, section, detail, etc.)? What areas, systems, or components are shown? Provide a comprehensive summary.",
+    "design_codes": "List all design codes, standards, and regulations referenced in this drawing. Include building codes, material standards (ASTM, ANSI, etc.), and any compliance requirements mentioned.",
+    "component_dimensions": "Create a summary of all components and their dimensions shown in this drawing. Include structural elements, equipment, fixtures, and any measurable items with their sizes, quantities, and specifications.",
+    "custom": "",
 }
 
 
@@ -27,7 +34,7 @@ def _render_page_base64(image) -> str:
 
 
 def _render_all_pages_base64(pdf_path: str, dpi: int = 200) -> List[Dict[str, Any]]:
-    images = convert_from_path(pdf_path, dpi=dpi)
+    images = convert_from_path(pdf_path, dpi=dpi, poppler_path=POPPLER_PATH)
     if not images:
         raise RuntimeError("Failed to render PDF pages.")
     pages = []
@@ -128,13 +135,20 @@ def run_vlm(
     api_key: str = None,
     ollama_url: str = "http://localhost:11434",
     max_pages: Optional[int] = None,
+    custom_prompt: Optional[str] = None,
 ) -> Dict[str, Any]:
     if prompt_key not in PROMPTS:
         raise RuntimeError(f"Unknown prompt_key '{prompt_key}'.")
 
     start_time = time.perf_counter()
     all_pages = _render_all_pages_base64(pdf_path)
-    prompt = PROMPTS[prompt_key]
+
+    if prompt_key == "custom" and custom_prompt:
+        prompt = custom_prompt
+    else:
+        prompt = PROMPTS[prompt_key]
+        if not prompt and prompt_key == "custom":
+            raise RuntimeError("Custom prompt is required when using 'custom' prompt type.")
 
     if max_pages is not None and max_pages > 0:
         all_pages = all_pages[:max_pages]

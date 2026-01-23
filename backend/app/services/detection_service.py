@@ -5,6 +5,12 @@ from typing import Any, Dict, List, Optional
 import torch
 from pdf2image import convert_from_path
 
+# Poppler path for Windows
+POPPLER_PATH = os.environ.get(
+    "POPPLER_PATH",
+    r"C:\Users\michael.martello\Downloads\poppler-install\poppler-25.07.0\Library\bin"
+)
+
 
 def _run_yolov8(pdf_path: str, targets: Optional[List[str]] = None) -> Dict[str, Any]:
     try:
@@ -14,7 +20,7 @@ def _run_yolov8(pdf_path: str, targets: Optional[List[str]] = None) -> Dict[str,
 
     model_path = os.getenv("YOLO_MODEL_PATH", "yolov8n.pt")
     model = YOLO(model_path)
-    images = convert_from_path(pdf_path, dpi=200)
+    images = convert_from_path(pdf_path, dpi=200, poppler_path=POPPLER_PATH)
     target_set = {target.lower() for target in targets or []}
 
     pages = []
@@ -63,7 +69,7 @@ def _run_grounding_dino(
     if not targets:
         raise RuntimeError("Grounding DINO requires target labels.")
     processor, model, model_name = _load_grounding_dino()
-    images = convert_from_path(pdf_path, dpi=200)
+    images = convert_from_path(pdf_path, dpi=200, poppler_path=POPPLER_PATH)
     query = ". ".join(targets)
 
     pages = []

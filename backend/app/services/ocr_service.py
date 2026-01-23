@@ -4,6 +4,12 @@ from typing import Any, Dict, List, Optional
 
 from pdf2image import convert_from_path
 
+# Poppler path for Windows
+POPPLER_PATH = os.environ.get(
+    "POPPLER_PATH",
+    r"C:\Users\michael.martello\Downloads\poppler-install\poppler-25.07.0\Library\bin"
+)
+
 
 def _parse_confidence(value: str) -> Optional[float]:
     if value is None:
@@ -195,7 +201,7 @@ def run_ocr(pdf_path: str, provider: str, dpi: int = 200) -> Dict[str, Any]:
         raise FileNotFoundError("PDF not found.")
 
     start_time = time.perf_counter()
-    images = convert_from_path(pdf_path, dpi=dpi)
+    images = convert_from_path(pdf_path, dpi=dpi, poppler_path=POPPLER_PATH)
     provider_key = provider.lower().strip()
     if provider_key == "tesseract":
         pages = _run_tesseract(images)
