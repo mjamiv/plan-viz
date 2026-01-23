@@ -46,7 +46,9 @@ class OcrRequest(BaseModel):
 
 class VlmRequest(BaseModel):
     prompt_key: str
-    model: str = "qwen2-vl:7b"
+    model: str = "gpt-4o"
+    provider: str = "openai"  # "openai" or "ollama"
+    api_key: Optional[str] = None  # Required for OpenAI
     max_pages: Optional[int] = None
 
 

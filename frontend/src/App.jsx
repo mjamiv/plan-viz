@@ -4,6 +4,7 @@ import Viewer from "./components/Viewer.jsx";
 import Comparison from "./components/Comparison.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import AnnotationReview from "./components/AnnotationReview.jsx";
+import { Agentation } from "agentation";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
@@ -11,145 +12,123 @@ export default function App() {
   const [document, setDocument] = useState(null);
   const [runs, setRuns] = useState([]);
   const [status, setStatus] = useState("");
-  const [ocrProvider, setOcrProvider] = useState("tesseract");
   const [promptKey, setPromptKey] = useState("room_dimensions");
-  const [vlmModel, setVlmModel] = useState("qwen2-vl:7b");
+  const [vlmProvider, setVlmProvider] = useState("openai");
+  const [vlmModel, setVlmModel] = useState("gpt-4o");
+  const [apiKey, setApiKey] = useState("");
   const [vlmMaxPages, setVlmMaxPages] = useState("");
-  const [layoutProvider, setLayoutProvider] = useState("layoutlmv3");
-  const [detectProvider, setDetectProvider] = useState("yolov8");
-  const [detectTargets, setDetectTargets] = useState(
-    "doors, windows, walls, outlets"
-  );
   const [pages, setPages] = useState([]);
   const [activeRunId, setActiveRunId] = useState(null);
   const [activeTab, setActiveTab] = useState("viewer");
 
   const handleUpload = async (file) => {
+    console.log("[Upload] Starting upload:", file.name, file.size, "bytes");
     setStatus("Uploading...");
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch(`${API_BASE}/upload/`, {
-      method: "POST",
-      body: formData,
-    });
-    if (!response.ok) {
-      setStatus("Upload failed.");
-      return;
+    try {
+      const response = await fetch(`${API_BASE}/upload/`, {
+        method: "POST",
+        body: formData,
+      });
+      console.log("[Upload] Response status:", response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[Upload] Failed:", response.status, errorText);
+        setStatus("Upload failed.");
+        return;
+      }
+      const data = await response.json();
+      console.log("[Upload] Success:", data);
+      setDocument(data);
+      setRuns([]);
+      setPages([]);
+      setActiveRunId(null);
+      setStatus("Uploaded. Ready to process.");
+    } catch (err) {
+      console.error("[Upload] Error:", err);
+      setStatus(`Upload error: ${err.message}`);
     }
-    const data = await response.json();
-    setDocument(data);
-    setRuns([]);
-    setPages([]);
-    setActiveRunId(null);
-    setStatus("Uploaded. Ready to process.");
   };
 
   const handleProcess = async () => {
     if (!document) return;
+    console.log("[Process] Starting for document:", document.id);
     setStatus("Processing...");
-    const response = await fetch(`${API_BASE}/process/${document.id}`, {
-      method: "POST",
-    });
-    if (!response.ok) {
-      setStatus("Processing failed.");
-      return;
+    try {
+      const response = await fetch(`${API_BASE}/process/${document.id}`, {
+        method: "POST",
+      });
+      console.log("[Process] Response status:", response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[Process] Failed:", response.status, errorText);
+        setStatus("Processing failed.");
+        return;
+      }
+      const run = await response.json();
+      console.log("[Process] Success:", run);
+      setRuns((prev) => [run, ...prev]);
+      if (run.output?.pages) {
+        setPages(run.output.pages);
+      }
+      setActiveRunId(run.id);
+      setStatus(`Run ${run.status}`);
+    } catch (err) {
+      console.error("[Process] Error:", err);
+      setStatus(`Process error: ${err.message}`);
     }
-    const run = await response.json();
-    setRuns((prev) => [run, ...prev]);
-    if (run.output?.pages) {
-      setPages(run.output.pages);
-    }
-    setActiveRunId(run.id);
-    setStatus(`Run ${run.status}`);
-  };
-
-  const handleOcr = async () => {
-    if (!document) return;
-    setStatus("Running OCR...");
-    const response = await fetch(`${API_BASE}/ocr/${document.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider: ocrProvider }),
-    });
-    if (!response.ok) {
-      setStatus("OCR failed.");
-      return;
-    }
-    const run = await response.json();
-    setRuns((prev) => [run, ...prev]);
-    setActiveRunId(run.id);
-    setStatus(`OCR ${run.status}`);
   };
 
   const handleVlm = async () => {
     if (!document) return;
-    setStatus("Running VLM...");
-    const payload = { prompt_key: promptKey, model: vlmModel };
+    const payload = {
+      prompt_key: promptKey,
+      model: vlmModel,
+      provider: vlmProvider,
+      api_key: apiKey,
+    };
     if (vlmMaxPages && parseInt(vlmMaxPages) > 0) {
       payload.max_pages = parseInt(vlmMaxPages);
     }
-    const response = await fetch(`${API_BASE}/vlm/${document.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      setStatus("VLM failed.");
-      return;
+    console.log("[VLM] Starting request:", { documentId: document.id, ...payload, api_key: apiKey ? "***" : "(empty)" });
+    setStatus("Running VLM...");
+    try {
+      const response = await fetch(`${API_BASE}/vlm/${document.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      console.log("[VLM] Response status:", response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[VLM] HTTP Error:", response.status, errorText);
+        setStatus("VLM failed.");
+        return;
+      }
+      const run = await response.json();
+      console.log("[VLM] Response data:", run);
+      if (run.output?.error) {
+        console.error("[VLM] Backend error:", run.output.error);
+      }
+      if (run.output?.output?.raw) {
+        console.log("[VLM] Model response:", run.output.output.raw.substring(0, 500));
+      }
+      setRuns((prev) => [run, ...prev]);
+      setActiveRunId(run.id);
+      setStatus(`VLM ${run.status}`);
+    } catch (err) {
+      console.error("[VLM] Fetch error:", err);
+      setStatus(`VLM error: ${err.message}`);
     }
-    const run = await response.json();
-    setRuns((prev) => [run, ...prev]);
-    setActiveRunId(run.id);
-    setStatus(`VLM ${run.status}`);
-  };
-
-  const handleLayout = async () => {
-    if (!document) return;
-    setStatus("Running layout analysis...");
-    const response = await fetch(`${API_BASE}/layout/${document.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider: layoutProvider }),
-    });
-    if (!response.ok) {
-      setStatus("Layout failed.");
-      return;
-    }
-    const run = await response.json();
-    setRuns((prev) => [run, ...prev]);
-    setActiveRunId(run.id);
-    setStatus(`Layout ${run.status}`);
-  };
-
-  const handleDetect = async () => {
-    if (!document) return;
-    setStatus("Running detection...");
-    const response = await fetch(`${API_BASE}/detect/${document.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        provider: detectProvider,
-        targets: detectTargets
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-      }),
-    });
-    if (!response.ok) {
-      setStatus("Detection failed.");
-      return;
-    }
-    const run = await response.json();
-    setRuns((prev) => [run, ...prev]);
-    setActiveRunId(run.id);
-    setStatus(`Detection ${run.status}`);
   };
 
   return (
-    <div className="app">
+    <>
+      <div className="app">
       <header>
-        <h1>Construction Vision</h1>
-        <p>Baseline PDF ingestion with OCR, VLM, layout, and detection runs.</p>
+        <h1>viz plan - v0</h1>
+        <p>PDF ingestion with VLM analysis.</p>
       </header>
       <section className="panel">
         <Upload onUpload={handleUpload} />
@@ -162,26 +141,29 @@ export default function App() {
         </button>
         <div className="row">
           <label className="select">
-            <span>OCR Provider</span>
+            <span>VLM Provider</span>
             <select
-              value={ocrProvider}
-              onChange={(event) => setOcrProvider(event.target.value)}
+              value={vlmProvider}
+              onChange={(event) => {
+                setVlmProvider(event.target.value);
+                setVlmModel(event.target.value === "openai" ? "gpt-4o" : "qwen2-vl:7b");
+              }}
             >
-              <option value="tesseract">Tesseract</option>
-              <option value="paddleocr">PaddleOCR</option>
-              <option value="surya">Surya</option>
-              <option value="easyocr">EasyOCR</option>
+              <option value="openai">OpenAI</option>
+              <option value="ollama">Ollama</option>
             </select>
           </label>
-          <button
-            className="primary"
-            onClick={handleOcr}
-            disabled={!document}
-          >
-            Run OCR
-          </button>
-        </div>
-        <div className="row">
+          {vlmProvider === "openai" && (
+            <label className="select">
+              <span>API Key</span>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+                placeholder="sk-..."
+              />
+            </label>
+          )}
           <label className="select">
             <span>VLM Prompt</span>
             <select
@@ -197,10 +179,22 @@ export default function App() {
           </label>
           <label className="select">
             <span>Model</span>
-            <input
-              value={vlmModel}
-              onChange={(event) => setVlmModel(event.target.value)}
-            />
+            {vlmProvider === "openai" ? (
+              <select
+                value={vlmModel}
+                onChange={(event) => setVlmModel(event.target.value)}
+              >
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+              </select>
+            ) : (
+              <input
+                value={vlmModel}
+                onChange={(event) => setVlmModel(event.target.value)}
+                placeholder="qwen2-vl:7b"
+              />
+            )}
           </label>
           <label className="select">
             <span>Max Pages</span>
@@ -219,50 +213,6 @@ export default function App() {
             disabled={!document}
           >
             Run VLM
-          </button>
-        </div>
-        <div className="row">
-          <label className="select">
-            <span>Layout</span>
-            <select
-              value={layoutProvider}
-              onChange={(event) => setLayoutProvider(event.target.value)}
-            >
-              <option value="layoutlmv3">LayoutLMv3</option>
-            </select>
-          </label>
-          <button
-            className="primary"
-            onClick={handleLayout}
-            disabled={!document}
-          >
-            Run Layout
-          </button>
-        </div>
-        <div className="row">
-          <label className="select">
-            <span>Detection</span>
-            <select
-              value={detectProvider}
-              onChange={(event) => setDetectProvider(event.target.value)}
-            >
-              <option value="yolov8">YOLOv8</option>
-              <option value="grounding_dino">Grounding DINO</option>
-            </select>
-          </label>
-          <label className="select">
-            <span>Targets</span>
-            <input
-              value={detectTargets}
-              onChange={(event) => setDetectTargets(event.target.value)}
-            />
-          </label>
-          <button
-            className="primary"
-            onClick={handleDetect}
-            disabled={!document}
-          >
-            Run Detection
           </button>
         </div>
         <p className="status">{status}</p>
@@ -328,6 +278,8 @@ export default function App() {
           />
         )}
       </section>
-    </div>
+      </div>
+      <Agentation />
+    </>
   );
 }

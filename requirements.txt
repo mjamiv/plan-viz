@@ -8,6 +8,7 @@ pdf2image
 pillow
 pytesseract
 httpx
+openai>=1.0.0
 torch
 transformers>=4.38.0
 # Optional detection stack

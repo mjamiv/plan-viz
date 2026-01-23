@@ -1,5 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap");
 
+/* Acumin Pro - uses local install, or falls back to Space Grotesk */
+@font-face {
+  font-family: "Acumin Pro";
+  src: local("Acumin Pro"), local("AcuminPro-Regular");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "Acumin Pro";
+  src: local("Acumin Pro Semibold"), local("AcuminPro-Semibold");
+  font-weight: 600;
+}
+
 :root {
   color-scheme: light;
   font-family: "Space Grotesk", sans-serif;
@@ -45,6 +57,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+  font-family: "Acumin Pro", "Space Grotesk", sans-serif;
   font-weight: 600;
   margin-right: 16px;
 }
@@ -61,6 +74,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  font-family: "Acumin Pro", "Space Grotesk", sans-serif;
   font-weight: 600;
 }
 
@@ -92,7 +106,7 @@ button.primary {
   border: none;
   border-radius: 999px;
   padding: 10px 20px;
-  background: #1f1c17;
+  background: #0a0908;
   color: #f5f0e8;
   font-weight: 600;
   cursor: pointer;
@@ -123,7 +137,7 @@ button.primary:not(:disabled):hover {
   text-decoration: none;
   border-radius: 999px;
   padding: 8px 16px;
-  background: #1f1c17;
+  background: #0a0908;
   color: #f5f0e8;
   font-weight: 600;
 }
